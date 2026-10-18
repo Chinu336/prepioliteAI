@@ -1,11 +1,22 @@
+import { supabaseClient } from "./supabase.js";
+
 const API_BASE = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/$/, "");
 
 async function post(path, body) {
+  if (!supabaseClient) throw new Error("Sign-in is not configured. Please contact the app administrator.");
+  const { data, error: sessionError } = await supabaseClient.auth.getSession();
+  if (sessionError) throw new Error("Could not verify your sign-in. Please sign in again.");
+  const session = data.session;
+  if (!session?.access_token) throw new Error("Please sign in before using this feature.");
+
   let response;
   try {
     response = await fetch(`${API_BASE}${path}`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${session.access_token}`
+      },
       body: JSON.stringify(body)
     });
   } catch {

@@ -1,5 +1,6 @@
-import { testDatabaseConnection } from "./db.js";
 import "dotenv/config";
+import { testDatabaseConnection } from "./db.js";
+import { authConfigured, requireAuth } from "./auth.js";
 import express from "express";
 import cors from "cors";
 import { analyzeResume, generateInterviewQuestion, evaluateInterviewAnswer } from "./ai.js";
@@ -28,22 +29,27 @@ app.get("/", (_req, res) => {
   res.json({ name: "Preppilot AI API", status: "ok", endpoints: ["/api/health", "/api/resume/analyze", "/api/interview/question", "/api/interview/evaluate"] });
 });
 app.get("/api/health", (_req, res) => {
-  res.json({ status: "ok", aiConfigured: Boolean(process.env.GROQ_API_KEY?.trim()), model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile" });
+  res.json({
+    status: "ok",
+    aiConfigured: Boolean(process.env.GROQ_API_KEY?.trim()),
+    authConfigured,
+    model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile"
+  });
 });
 
-app.post("/api/resume/analyze", async (req, res, next) => {
+app.post("/api/resume/analyze", requireAuth, async (req, res, next) => {
   try {
     const result = await analyzeResume(req.body || {});
     res.json({ success: true, data: result });
   } catch (error) { next(error); }
 });
-app.post("/api/interview/question", async (req, res, next) => {
+app.post("/api/interview/question", requireAuth, async (req, res, next) => {
   try {
     const result = await generateInterviewQuestion(req.body || {});
     res.json({ success: true, data: result });
   } catch (error) { next(error); }
 });
-app.post("/api/interview/evaluate", async (req, res, next) => {
+app.post("/api/interview/evaluate", requireAuth, async (req, res, next) => {
   try {
     const result = await evaluateInterviewAnswer(req.body || {});
     res.json({ success: true, data: result });

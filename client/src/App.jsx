@@ -9,11 +9,11 @@ Projects:
 - Expense Tracker: Created a Java and MySQL application to record expenses.
 Education: B.Tech Computer Science and Engineering (IoT)`;
 
-function readJobs() {
-  try { return JSON.parse(localStorage.getItem("preppilot-jobs") || "[]"); } catch { return []; }
+function readJobs(userId) {
+  try { return JSON.parse(localStorage.getItem(`preppilot-jobs:${userId}`) || "[]"); } catch { return []; }
 }
 
-export default function App() {
+export function Workspace({ user, onSignOut }) {
   const [active, setActive] = useState("resume");
   const [health, setHealth] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -29,11 +29,11 @@ export default function App() {
   const [question, setQuestion] = useState(null);
   const [answer, setAnswer] = useState("");
   const [answerResult, setAnswerResult] = useState(null);
-  const [jobs, setJobs] = useState(readJobs);
+  const [jobs, setJobs] = useState(() => readJobs(user.id));
   const [jobForm, setJobForm] = useState({ company: "", role: "", status: "Applied", link: "" });
 
   useEffect(() => { getHealth().then(setHealth); }, []);
-  useEffect(() => { localStorage.setItem("preppilot-jobs", JSON.stringify(jobs)); }, [jobs]);
+  useEffect(() => { localStorage.setItem(`preppilot-jobs:${user.id}`, JSON.stringify(jobs)); }, [jobs, user.id]);
 
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
@@ -125,7 +125,7 @@ export default function App() {
       <main className="main-area">
         <header className="topbar">
           <div className="breadcrumbs">Workspace <span>/</span> <strong>{nav.find((x) => x[0] === active)?.[2]}</strong></div>
-          <div className="top-right"><span className="status-pill"><i />{health?.aiConfigured ? "AI connected" : "Learning mode"}</span><div className="avatar">P</div></div>
+          <div className="top-right"><span className="status-pill"><i />{health?.aiConfigured ? "AI connected" : "Learning mode"}</span><span className="user-email">{user.email}</span><button className="sign-out-button" onClick={onSignOut}>Sign out</button></div>
         </header>
 
         <div className="content">

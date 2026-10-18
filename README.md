@@ -37,6 +37,16 @@ npm run dev
 ```
 Open the URL Vite prints (usually `http://localhost:5173`).
 
+### Sign-in setup
+Create a project at [Supabase](https://supabase.com/), then copy its Project URL and publishable/anon key into `client/.env`:
+```env
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your_publishable_anon_key
+```
+In Supabase Authentication settings, enable email/password sign-in, set the local Site URL to `http://localhost:5173`, and add that URL to the allowed redirect URLs. Configure the deployed frontend URL there as well. The app requires a verified Supabase session before opening the workspace. Job applications remain in local browser storage and are separated by signed-in account on that browser; they are not uploaded to Supabase.
+
+The backend also requires the same Supabase Project URL and publishable/anon key as `SUPABASE_URL` and `SUPABASE_ANON_KEY`. AI endpoints reject unauthenticated requests and validate each signed-in user's access token with Supabase. Do not use a Supabase service-role key in the browser or expose it in deployment logs.
+
 On Windows PowerShell, if `cp` is unavailable:
 ```powershell
 Copy-Item .env.example .env
@@ -68,6 +78,8 @@ Without a key, the app returns clearly labeled demo feedback so you can test the
    - `GROQ_API_KEY` = your private key (optional, but required for real AI)
    - `GROQ_MODEL` = `llama-3.3-70b-versatile`
    - `CLIENT_ORIGIN` = your deployed Vercel URL, e.g. `https://your-app.vercel.app`
+   - `SUPABASE_URL` = Supabase Project URL
+   - `SUPABASE_ANON_KEY` = Supabase publishable/anon key
    - `NODE_ENV` = `production`
 7. Deploy and copy the Render service URL, e.g. `https://your-api.onrender.com`.
 
@@ -78,11 +90,15 @@ Without a key, the app returns clearly labeled demo feedback so you can test the
 4. Output directory: `dist`
 5. Add environment variable:
    - `VITE_API_URL` = your Render URL, e.g. `https://your-api.onrender.com`
+   - `VITE_SUPABASE_URL` = Supabase Project URL
+   - `VITE_SUPABASE_ANON_KEY` = Supabase publishable/anon key
 6. Deploy.
+
+For a Render static-site frontend, use root directory `client`, build command `npm install && npm run build`, publish directory `dist`, and set `VITE_API_URL`, `VITE_SUPABASE_URL`, and `VITE_SUPABASE_ANON_KEY`. Set the deployed frontend URL in the Supabase allowed redirect URLs and set `CLIENT_ORIGIN` on the Render API to that frontend URL.
 
 If you deploy the frontend before the backend, you can update `VITE_API_URL` later and redeploy. Add the exact Vercel URL to Render's `CLIENT_ORIGIN`. For preview deployments, either configure allowed origins in the backend or use the production URL.
 
 ## Important limitations
 - The job tracker uses browser localStorage; data is not shared across devices and is not a server database.
-- This starter intentionally does not implement real user accounts or secure multi-user storage. Do not collect sensitive user data until you add production-grade authentication, a database, privacy terms, and rate limiting.
+- Supabase provides email/password accounts and the backend validates access tokens, but the starter does not include cloud-persisted user data, rate limiting, or privacy terms. Add these before handling sensitive or high-volume production workloads.
 - Resume text is sent to the AI provider when real AI mode is enabled. Avoid including unnecessary sensitive personal information.
